@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>COCORO SHOP | 접수 조회</title>
+  <style>
+    :root{
+      --bg1:#fff7fb; --bg2:#f6fbff;
+      --card:rgba(255,255,255,.92);
+      --text:#111827; --muted:#6b7280; --line:#e5e7eb;
+      --accent:#e56aa6; --accent2:#7aa7ff;
+      --danger:#ef4444; --ok:#0f766e;
+      --shadow: 0 14px 48px rgba(17,24,39,.10);
+      --radius: 18px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,Roboto,sans-serif;
+      background:
+        radial-gradient(900px 600px at 12% 12%, rgba(229,106,166,.16), transparent 60%),
+        radial-gradient(900px 600px at 88% 18%, rgba(122,167,255,.14), transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+    }
+    .wrap{ width:min(720px, 92vw); margin: 28px auto 64px; }
+    .hero{ padding: 14px 8px 10px; }
+    .brand{
+      display:flex; align-items:center; gap:12px; margin-bottom:10px;
+      font-weight:950; letter-spacing:1.2px; text-transform:uppercase;
+    }
+    .mono{
+      width:44px; height:44px; border-radius:16px;
+      background: linear-gradient(135deg, rgba(229,106,166,.96), rgba(122,167,255,.96));
+      display:flex; align-items:center; justify-content:center;
+      color:#fff; font-weight:950;
+      box-shadow: 0 14px 30px rgba(229,106,166,.16);
+    }
+    .title{ margin: 8px 0 6px; font-size: clamp(24px, 4vw, 32px); font-weight:950; }
+    .subtitle{ margin:0; color:var(--muted); line-height:1.6; font-size:14.5px; }
+
+    .card{
+      margin-top:14px; background:var(--card);
+      border:1px solid rgba(229,231,235,.78);
+      box-shadow:var(--shadow);
+      border-radius:var(--radius);
+      overflow:hidden;
+    }
+    .card-top{
+      padding:14px 18px;
+      border-bottom:1px solid rgba(229,231,235,.78);
+      background: linear-gradient(90deg, rgba(229,106,166,.09), rgba(122,167,255,.08));
+      color:var(--muted);
+      font-size:13.2px;
+      line-height:1.55;
+    }
+    .form{ padding:18px; }
+
+    label{ font-size:14px; font-weight:800; }
+    input{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+      font-size:16px;
+      outline:none;
+      background:#fff;
+      margin-top:6px;
+    }
+    input:focus{
+      border-color: rgba(229,106,166,.55);
+      box-shadow: 0 0 0 4px rgba(229,106,166,.13);
+    }
+    .row{ display:grid; grid-template-columns: 1fr 170px; gap:12px; margin-top:12px; }
+    @media (max-width: 520px){ .row{ grid-template-columns: 1fr; } }
+    .btn{
+      border:none; border-radius:14px;
+      padding:12px 14px;
+      font-size:16px; font-weight:900;
+      cursor:pointer; min-height:48px;
+      background: linear-gradient(135deg, rgba(229,106,166,.98), rgba(122,167,255,.98));
+      color:#fff;
+      box-shadow:0 12px 24px rgba(229,106,166,.16);
+    }
+    .status{ margin-top:12px; font-size:14px; min-height:22px; color:var(--muted); }
+    .status.ok{ color:var(--ok); font-weight:900; }
+    .status.bad{ color:#b91c1c; font-weight:900; }
+
+    .result{
+      display:none;
+      margin-top:14px;
+      background:#fff;
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:16px;
+      padding:14px;
+    }
+    .result.show{ display:block; }
+    .result h3{ margin:0 0 10px; font-size:16px; font-weight:950; }
+
+    .kv{ display:grid; grid-template-columns: 120px 1fr; gap:8px 10px; font-size:14px; }
+    .kv .k{ color:var(--muted); }
+    .kv .v{ font-weight:900; word-break:break-word; }
+
+    .stepper{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:8px;
+      font-size:13px;
+    }
+    .step{
+      padding:10px 8px;
+      border:1px solid rgba(229,231,235,.9);
+      border-radius:12px;
+      text-align:center;
+      color:#6b7280;
+      background: rgba(243,244,246,.6);
+      font-weight:900;
+    }
+    .step.on{
+      color:#111827;
+      background: rgba(229,106,166,.10);
+      border-color: rgba(229,106,166,.28);
+    }
+
+    .tiny{ margin-top:10px; color:var(--muted); font-size:12.5px; line-height:1.45; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div class="brand"><div class="mono">C</div>COCORO SHOP</div>
+      <h1 class="title">접수 조회</h1>
+      <p class="subtitle">접수번호로 현재 처리 상태 / 송장번호를 확인할 수 있어요.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        💡 접수번호는 접수증에 적혀 있어요. (접수번호만 입력하면 됩니다)
+      </div>
+      <div class="form">
+        <label>접수번호</label>
+        <input id="receipt" placeholder="예: 260228-154023-김서연-2242" />
+
+        <div class="row">
+          <div></div>
+          <div style="display:flex; align-items:flex-end;">
+            <button class="btn" id="btnCheck">조회</button>
+          </div>
+        </div>
+
+        <div class="status" id="msg"></div>
+
+        <div class="result" id="result">
+          <h3>조회 결과</h3>
+          <div class="kv" id="kv"></div>
+
+          <div class="stepper" id="stepper">
+            <div class="step" data-s="접수">접수</div>
+            <div class="step" data-s="출고준비">출고준비</div>
+            <div class="step" data-s="출고완료">출고완료</div>
+            <div class="step" data-s="보류">보류</div>
+          </div>
+
+          <div class="tiny">
+            수정이 필요하시면 인스타 DM으로 <b>접수번호</b>와 수정 내용을 보내주세요.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const msg = (t, type) => {
+      const el = document.getElementById('msg');
+      el.classList.remove('ok','bad');
+      if(type) el.classList.add(type);
+      el.textContent = t || '';
+    };
+
+    // hash로 접수번호 미리 채우기 (#receipt=...)
+    (function(){
+      const h = location.hash || '';
+      const m = h.match(/receipt=([^&]+)/);
+      if(m){
+        document.getElementById('receipt').value = decodeURIComponent(m[1]);
+      }
+    })();
+
+    function setStepper(status){
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('on'));
+      const key = status || '접수';
+      const el = document.querySelector(`.step[data-s="${key}"]`);
+      if(el) el.classList.add('on');
+    }
+
+    async function check(){
+      const receipt = document.getElementById('receipt').value.trim();
+
+      document.getElementById('result').classList.remove('show');
+      msg('');
+
+      if(!receipt){
+        msg('접수번호를 입력해주세요.', 'bad');
+        return;
+      }
+
+      msg('조회 중입니다…');
+
+      const res = await fetch('/api/status', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify({ receiptTitle: receipt })
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if(!res.ok){
+        msg(data.error || '조회에 실패했어요. 접수번호를 확인해주세요.', 'bad');
+        return;
+      }
+
+      msg('✅ 조회 완료', 'ok');
+
+      const kv = document.getElementById('kv');
+      kv.innerHTML = `
+        <div class="k">접수번호</div><div class="v">${data.receiptTitle}</div>
+        <div class="k">상태</div><div class="v">${data.status || '-'}</div>
+        ${data.tracking ? `<div class="k">송장번호</div><div class="v">${data.tracking}</div>` : ``}
+        <div class="k">최종 업데이트</div><div class="v">${data.lastEdited || '-'}</div>
+      `;
+
+      setStepper(data.status || '접수');
+      document.getElementById('result').classList.add('show');
+    }
+
+    document.getElementById('btnCheck').addEventListener('click', check);
+  </script>
+</body>
+</html>
