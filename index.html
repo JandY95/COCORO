@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>COCORO SHOP | 배송 정보</title>
+
+  <!-- 카카오(다음) 우편번호 서비스 -->
+  <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+  <!-- 접수증 PNG 저장용 -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <style>
+    :root{
+      --bg1:#fff7fb; --bg2:#f6fbff;
+      --card:rgba(255,255,255,.92);
+      --text:#111827; --muted:#6b7280; --line:#e5e7eb;
+      --accent:#e56aa6; --accent2:#7aa7ff;
+      --danger:#ef4444; --ok:#0f766e;
+      --shadow: 0 14px 48px rgba(17,24,39,.10);
+      --radius: 18px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,Roboto,sans-serif;
+      background:
+        radial-gradient(900px 600px at 12% 12%, rgba(229,106,166,.16), transparent 60%),
+        radial-gradient(900px 600px at 88% 18%, rgba(122,167,255,.14), transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+    }
+    .wrap{ width:min(760px, 92vw); margin: 28px auto 64px; }
+    @media (max-width: 640px){ .wrap{ margin: 18px auto 46px; } }
+
+    .hidden{ display:none !important; }
+
+    .hero{ padding:14px 8px 10px; }
+    .brand-row{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+    .mono{
+      width:44px; height:44px; border-radius:16px;
+      background: linear-gradient(135deg, rgba(229,106,166,.96), rgba(122,167,255,.96));
+      box-shadow: 0 14px 30px rgba(229,106,166,.16);
+      display:flex; align-items:center; justify-content:center;
+      color:#fff; font-weight:950; letter-spacing:.8px;
+      position:relative; overflow:hidden; flex:0 0 auto;
+    }
+    .mono::after{
+      content:""; position:absolute; inset:-40%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.35), transparent 45%);
+      transform: rotate(12deg);
+    }
+    .mono span{ position:relative; z-index:1; font-size:18px; }
+    .brand-name{ font-weight:950; letter-spacing:1.2px; font-size:16px; text-transform:uppercase; }
+
+    .brand-actions{ margin-left:auto; display:flex; gap:10px; align-items:center; }
+    .top-link{
+      display:inline-flex; align-items:center; justify-content:center; gap:6px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(229,106,166,.22);
+      background: rgba(255,255,255,.75);
+      text-decoration:none;
+      font-weight: 900;
+      color:#374151;
+      font-size: 14px;
+      white-space: nowrap;
+      transition: transform .05s ease, filter .15s ease;
+    }
+    .top-link:active{ transform: translateY(1px); }
+
+    .title{ margin:8px 0 6px; font-size:clamp(26px, 4.4vw, 36px); font-weight:950; letter-spacing:-0.4px; }
+    .subtitle{ margin:0; color:var(--muted); line-height:1.65; font-size:14.5px; }
+
+    .card{
+      margin-top:14px;
+      background: var(--card);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(229,231,235,.78);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      overflow:hidden;
+    }
+    .card-top{
+      padding:14px 18px;
+      border-bottom: 1px solid rgba(229,231,235,.78);
+      background: linear-gradient(90deg, rgba(229,106,166,.09), rgba(122,167,255,.08));
+    }
+    .notice{ font-size:13.2px; color:var(--muted); line-height:1.55; }
+    .notice b{ color:#374151; }
+    .form{ padding:18px; }
+
+    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+    @media (max-width: 640px){
+      .grid{ grid-template-columns: 1fr; }
+      .form{ padding:16px; }
+      .card-top{ padding:13px 16px; }
+    }
+
+    .field{ display:flex; flex-direction:column; gap:6px; }
+    label{ font-size:14px; font-weight:800; letter-spacing:-.1px; }
+    .hint{ font-size:12.5px; color:var(--muted); line-height:1.45; }
+
+    input, textarea{
+      width:100%; border:1px solid var(--line);
+      border-radius:14px; padding:12px 12px;
+      font-size:16px; outline:none; background:#fff;
+      transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    input:focus, textarea:focus{
+      border-color: rgba(229,106,166,.55);
+      box-shadow: 0 0 0 4px rgba(229,106,166,.13);
+    }
+    textarea{ min-height:92px; resize:vertical; }
+    .readonly{ background: rgba(243,244,246,.75); }
+
+    .row{ display:flex; gap:10px; align-items:stretch; }
+    .row .grow{ flex:1 1 auto; min-width:0; }
+    .row .btn-compact{ flex:0 0 auto; width:132px; padding:12px 10px; }
+    @media (max-width: 420px){
+      .row{ flex-direction:column; }
+      .row .btn-compact{ width:100%; }
+    }
+
+    .btn{
+      border:none; border-radius:14px;
+      font-size:16px; font-weight:900; cursor:pointer;
+      min-height:48px; user-select:none;
+      transition: filter .15s ease, transform .05s ease;
+      display:flex; align-items:center; justify-content:center; gap:6px;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn-outline{ background:#fff; border:1px solid rgba(229,106,166,.42); color:#b84a84; }
+    .btn-primary{
+      background: linear-gradient(135deg, rgba(229,106,166,.98), rgba(122,167,255,.98));
+      color:#fff; box-shadow:0 12px 24px rgba(229,106,166,.16);
+      padding:12px 14px;
+    }
+    .btn-ghost{
+      background:#fff;
+      border:1px solid rgba(229,231,235,.9);
+      color:#374151;
+    }
+
+    .actions{ margin-top:16px; display:flex; gap:10px; flex-wrap:wrap; }
+    @media (max-width: 640px){ .actions{ flex-direction:column; } }
+
+    .error-box{
+      display:none;
+      border:1px solid rgba(239,68,68,.35);
+      background: rgba(239,68,68,.06);
+      color:#991b1b;
+      padding:12px 12px;
+      border-radius:14px;
+      margin-bottom:12px;
+      line-height:1.55;
+      font-size:14px;
+    }
+    .field.invalid input, .field.invalid textarea{
+      border-color: rgba(239,68,68,.55);
+      box-shadow: 0 0 0 4px rgba(239,68,68,.12);
+    }
+    .field .err{ display:none; color:var(--danger); font-size:12.5px; font-weight:800; }
+    .field.invalid .err{ display:block; }
+
+    .status{ margin-top:12px; font-size:14px; color:var(--muted); line-height:1.5; min-height:22px; }
+    .status.ok{ color:var(--ok); font-weight:900; }
+    .status.bad{ color:#b91c1c; font-weight:900; }
+
+    .checkline{
+      margin-top: 12px;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding: 10px 12px;
+      border: 1px solid rgba(229,231,235,.9);
+      border-radius: 14px;
+      background: rgba(255,255,255,.75);
+    }
+    .checkline input{ margin-top:3px; width:18px; height:18px; }
+    .checkline .checktext{ font-size: 13.5px; color:#374151; line-height:1.45; }
+    .checkline .checktext b{ color:#111827; }
+    .tiny{ font-size:12.5px; color:var(--muted); }
+
+    /* 접수 완료 */
+    .success{
+      display:none;
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(15,118,110,.18);
+      background: rgba(15,118,110,.05);
+    }
+    .success.show{ display:block; }
+    .success-title{ font-weight:950; color:var(--ok); margin:0 0 10px; font-size:16px; }
+
+    .receipt{
+      border-radius: 18px;
+      padding: 16px;
+      background:
+        linear-gradient(#ffffff,#ffffff) padding-box,
+        linear-gradient(135deg, rgba(229,106,166,.55), rgba(122,167,255,.45)) border-box;
+      border: 1px solid transparent;
+      box-shadow: 0 14px 42px rgba(0,0,0,.08);
+    }
+    .receipt-top{
+      display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
+      padding-bottom:12px; margin-bottom:12px;
+      border-bottom: 1px dashed rgba(229,231,235,1);
+    }
+    .receipt-brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight:950; letter-spacing:1.1px; text-transform:uppercase;
+    }
+    .receipt-badge{
+      width:30px; height:30px; border-radius:12px;
+      background: linear-gradient(135deg, rgba(229,106,166,.96), rgba(122,167,255,.96));
+      color:#fff; display:flex; align-items:center; justify-content:center;
+      font-weight:950;
+    }
+    .receipt-meta{
+      font-size:12.5px; color:var(--muted); text-align:right; line-height:1.4;
+    }
+    .receipt-grid{
+      display:grid;
+      grid-template-columns: 110px 1fr;
+      gap: 9px 10px;
+      font-size: 14.5px;
+    }
+    .receipt-grid .k{ color:var(--muted); }
+    .receipt-grid .v{ color:#111827; font-weight:800; word-break:break-word; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <!-- ✅ 접수 완료 후 이 헤더를 숨긴다 -->
+    <header class="hero" id="heroHeader">
+      <div class="brand-row">
+        <div class="mono" aria-hidden="true"><span>C</span></div>
+        <div class="brand-name">COCORO SHOP</div>
+
+        <div class="brand-actions">
+          <a class="top-link" href="status.html">🔎 접수 조회</a>
+        </div>
+      </div>
+
+      <h1 class="title">배송 정보</h1>
+      <p class="subtitle">
+        주문하신 상품을 정확하고 안전하게 보내기 위해 배송 정보를 입력해주세요.<br/>
+        입력하신 정보는 <b>배송 처리 목적</b>으로만 사용됩니다.
+      </p>
+    </header>
+
+    <section class="card" aria-label="배송 정보 입력 폼">
+      <div class="card-top" id="cardTop">
+        <div class="notice">
+          💡 <b>요청사항을 제외한 모든 항목은 필수</b>입니다.<br/>
+          ‘입력 완료’ 버튼을 누르면 누락된 항목을 안내해드려요.
+        </div>
+      </div>
+
+      <div class="form">
+        <!-- 제출 후에는 이 영역을 숨김 -->
+        <div id="formSection">
+          <div id="errorBox" class="error-box"></div>
+
+          <form id="form" novalidate>
+            <div class="grid">
+              <div class="field" id="f_customerName">
+                <label for="customerName">받는분 성함</label>
+                <input type="text" id="customerName" placeholder="예: 김서연" autocomplete="name" />
+                <div class="hint">실명 입력을 권장해요. (오배송/반송 방지)</div>
+                <div class="err">받는분 성함을 입력해주세요.</div>
+              </div>
+
+              <div class="field" id="f_phone">
+                <label for="phone">연락처</label>
+                <input type="tel" id="phone" placeholder="예: 010-1234-5678 / 02-123-4567" inputmode="tel" autocomplete="tel" />
+                <div class="err">연락처 형식을 확인해주세요.</div>
+                <div class="hint">휴대폰 또는 지역번호 포함 번호를 입력해주세요.</div>
+              </div>
+
+              <input type="hidden" id="postcode" />
+              <input type="hidden" id="fullAddress" />
+
+              <div class="field" id="f_address" style="grid-column: 1 / -1;">
+                <label for="baseAddress">주소</label>
+                <div class="row">
+                  <input type="text" id="baseAddress" class="readonly grow" readonly placeholder="‘주소 찾기’로 검색해주세요" />
+                  <button type="button" class="btn btn-outline btn-compact" id="btnFindAddress">🔎 주소 찾기</button>
+                </div>
+                <div class="err">주소 찾기를 눌러 주소를 선택해주세요.</div>
+                <div class="hint">도로명 주소를 선택하면 자동으로 입력되요.</div>
+              </div>
+
+              <div class="field" id="f_detailAddress" style="grid-column: 1 / -1;">
+                <label for="detailAddress">상세주소</label>
+                <input type="text" id="detailAddress" placeholder="동/호수, 상호명, 층수 등" autocomplete="street-address" />
+                <div class="err">상세주소를 입력해주세요.</div>
+                <div class="hint">예: 101동 1203호 / COCORO SHOP 빌딩 1층</div>
+              </div>
+            </div>
+
+            <div class="field" id="f_request" style="margin-top: 14px;">
+              <label for="request">요청사항 (선택)</label>
+              <textarea id="request" placeholder="예: 부재시 문 앞에 놓아주세요 / 경비실 맡겨주세요"></textarea>
+            </div>
+
+            <div class="checkline" id="f_confirm">
+              <input type="checkbox" id="confirmCheck" />
+              <div class="checktext">
+                <b>오배송 방지 확인</b> — 입력한 성함/연락처/주소가 정확합니다.
+                <div class="tiny">입력 완료 전 꼭 한 번 확인해주세요.</div>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button type="submit" class="btn btn-primary" id="submitBtn">입력 완료</button>
+            </div>
+
+            <div id="status" class="status" aria-live="polite"></div>
+          </form>
+        </div>
+
+        <!-- 접수 완료 -->
+        <div class="success" id="successBox">
+          <p class="success-title">✅ 접수 완료</p>
+
+          <div class="receipt" id="receiptCard">
+            <div class="receipt-top">
+              <div class="receipt-brand">
+                <div class="receipt-badge">C</div>
+                <div>COCORO SHOP</div>
+              </div>
+              <div class="receipt-meta" id="receiptMeta"></div>
+            </div>
+            <div class="receipt-grid" id="receiptGrid"></div>
+          </div>
+
+          <div class="actions" style="margin-top:12px;">
+            <button type="button" class="btn btn-ghost" id="btnCopyReceipt">접수번호 복사</button>
+            <button type="button" class="btn btn-ghost" id="btnOpenStatus">접수 조회</button>
+            <button type="button" class="btn btn-primary" id="btnSavePng">접수증 저장</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 주소검색 모달 -->
+  <div class="modal" id="postcodeModal" aria-hidden="true" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;z-index:9999;">
+    <div class="modal-backdrop" id="postcodeBackdrop" style="position:absolute;inset:0;background:rgba(17,24,39,.45);backdrop-filter:blur(2px);"></div>
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-label="주소 검색"
+         style="position:relative;width:min(520px,96vw);height:min(620px,86vh);background:#fff;border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.25);overflow:hidden;border:1px solid rgba(229,231,235,.9);">
+      <div class="modal-header" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:linear-gradient(90deg, rgba(229,106,166,.10), rgba(122,167,255,.10));border-bottom:1px solid rgba(229,231,235,.85);font-weight:900;">
+        <div>주소 검색</div>
+        <button type="button" id="btnCloseModal" aria-label="닫기" style="border:none;background:transparent;font-size:22px;cursor:pointer;padding:6px 10px;border-radius:10px;">×</button>
+      </div>
+      <div class="modal-body" id="postcodeEmbed" style="width:100%;height:calc(100% - 49px);"></div>
+    </div>
+  </div>
+
+  <script>
+    const submitUrl = '/api/submit';
+
+    function onlyDigits(v){ return String(v || '').replace(/\D/g, ''); }
+
+    function validatePhoneKR(d){
+      if(!d) return { ok:false, msg:'연락처를 입력해주세요.' };
+      if(d.startsWith('010')){
+        if(d.length === 11) return { ok:true };
+        return { ok:false, msg:'휴대폰 번호(010)는 11자리로 입력해주세요. 예) 010-1234-5678' };
+      }
+      if(/^01[1|6|7|8|9]/.test(d)){
+        if(d.length === 10 || d.length === 11) return { ok:true };
+        return { ok:false, msg:'휴대폰 번호를 끝까지 입력해주세요. 예) 011-123-4567' };
+      }
+      if(d.startsWith('070')){
+        if(d.length === 11) return { ok:true };
+        return { ok:false, msg:'070 번호를 끝까지 입력해주세요. 예) 070-1234-5678' };
+      }
+      if(d.startsWith('02')){
+        if(d.length === 9 || d.length === 10) return { ok:true };
+        return { ok:false, msg:'서울(02) 번호를 끝까지 입력해주세요. 예) 02-123-4567 또는 02-1234-5678' };
+      }
+      if(/^0\d{2}/.test(d)){
+        if(d.length === 10 || d.length === 11) return { ok:true };
+        return { ok:false, msg:'지역번호 포함 전화번호를 끝까지 입력해주세요. 예) 031-123-4567' };
+      }
+      return { ok:false, msg:'연락처 형식이 올바르지 않아요. 휴대폰 또는 지역번호 포함 번호로 입력해주세요.' };
+    }
+
+    function formatPhoneKRSafe(v){
+      const d = onlyDigits(v);
+      if(d.startsWith('02')){
+        if(d.length <= 2) return d;
+        if(d.length <= 5) return d.replace(/(\d{2})(\d{1,3})/, '$1-$2');
+        if(d.length === 9) return d.replace(/(\d{2})(\d{3})(\d{4})/, '$1-$2-$3');
+        if(d.length >= 10) return d.slice(0,10).replace(/(\d{2})(\d{4})(\d{4})/, '$1-$2-$3');
+        return d;
+      }
+      if(d.length <= 3) return d;
+      if(d.length <= 7) return d.replace(/(\d{3})(\d{1,4})/, '$1-$2');
+      return d.replace(/(\d{3})(\d{3,4})(\d{4}).*/, '$1-$2-$3');
+    }
+
+    function updateFullAddress(){
+      const base = document.getElementById('baseAddress').value.trim();
+      const detail = document.getElementById('detailAddress').value.trim();
+      document.getElementById('fullAddress').value = detail ? `${base} ${detail}` : base;
+    }
+
+    function ensureDaumLoaded(){
+      if(!(window.daum && window.daum.Postcode)){
+        alert('주소 검색 기능이 로드되지 않았어요. 광고차단/보안 확장프로그램을 끄고 새로고침 후 다시 시도해주세요.');
+        return false;
+      }
+      return true;
+    }
+
+    // 모달
+    const modal = document.getElementById('postcodeModal');
+    const embedEl = document.getElementById('postcodeEmbed');
+
+    function openModal(){
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal(){
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+      embedEl.innerHTML = '';
+    }
+    document.getElementById('btnCloseModal').addEventListener('click', closeModal);
+    document.getElementById('postcodeBackdrop').addEventListener('click', closeModal);
+    document.addEventListener('keydown', (e) => {
+      if(e.key === 'Escape' && modal.style.display === 'flex') closeModal();
+    });
+
+    function findAddressModal(){
+      if(!ensureDaumLoaded()) return;
+      openModal();
+      embedEl.innerHTML = '';
+      new daum.Postcode({
+        oncomplete: (data) => {
+          document.getElementById('postcode').value = data.zonecode || '';
+          document.getElementById('baseAddress').value = data.address || '';
+          document.getElementById('detailAddress').focus();
+          updateFullAddress();
+          closeModal();
+        },
+        onclose: () => closeModal()
+      }).embed(embedEl);
+    }
+    document.getElementById('btnFindAddress').addEventListener('click', findAddressModal);
+
+    document.getElementById('detailAddress').addEventListener('input', updateFullAddress);
+    document.getElementById('phone').addEventListener('input', (e) => {
+      const after = formatPhoneKRSafe(e.target.value);
+      if(e.target.value !== after) e.target.value = after;
+    });
+
+    // 접수 완료
+    let lastReceiptTitle = '';
+
+    async function copyTextSafe(text){
+      try{
+        await navigator.clipboard.writeText(text);
+      }catch{
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+    }
+
+    function showOnlyReceipt(){
+      // ✅ 접수증 화면에서는 상단 헤더(배송 정보/설명) 숨김
+      const hero = document.getElementById('heroHeader');
+      if (hero) hero.classList.add('hidden');
+
+      document.getElementById('formSection').classList.add('hidden');
+      document.getElementById('cardTop').classList.add('hidden');
+
+      const success = document.getElementById('successBox');
+      success.classList.add('show');
+      success.scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+
+    function showSuccessReceipt({receiptTitle, customerName, phone, baseAddress, detailAddress, request}){
+      lastReceiptTitle = receiptTitle;
+
+      const now = new Date();
+      const ktime = new Intl.DateTimeFormat('ko-KR', { timeZone:'Asia/Seoul', dateStyle:'medium', timeStyle:'medium' }).format(now);
+      document.getElementById('receiptMeta').innerHTML =
+        `접수번호: <b>${receiptTitle}</b><br/>접수시간: ${ktime}`;
+
+      const fullAddr = (baseAddress + (detailAddress ? ' ' + detailAddress : '')).trim();
+
+      const grid = document.getElementById('receiptGrid');
+      grid.innerHTML = `
+        <div class="k">받는 분</div><div class="v">${customerName}</div>
+        <div class="k">연락처</div><div class="v">${phone}</div>
+        <div class="k">주소</div><div class="v">${fullAddr}</div>
+        <div class="k">요청사항</div><div class="v">${request ? request : '없음'}</div>
+        <div class="k">상태</div><div class="v">접수</div>
+      `;
+
+      showOnlyReceipt();
+    }
+
+    async function saveReceiptPng(){
+      const card = document.getElementById('receiptCard');
+      if(!window.html2canvas){
+        alert('접수증 저장 기능을 불러오지 못했어요. 새로고침 후 다시 시도해주세요.');
+        return;
+      }
+      const canvas = await html2canvas(card, { scale: 2, backgroundColor: '#ffffff' });
+      const url = canvas.toDataURL('image/png');
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `COCORO_SHOP_접수증_${lastReceiptTitle || 'receipt'}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    async function copyReceipt(){
+      if(!lastReceiptTitle) return;
+      await copyTextSafe(lastReceiptTitle);
+      alert('접수번호를 복사했어요.');
+    }
+
+    function openStatusPage(){
+      if(!lastReceiptTitle){
+        window.location.href = 'status.html';
+        return;
+      }
+      window.location.href = `status.html#receipt=${encodeURIComponent(lastReceiptTitle)}`;
+    }
+
+    document.getElementById('btnSavePng').addEventListener('click', saveReceiptPng);
+    document.getElementById('btnCopyReceipt').addEventListener('click', copyReceipt);
+    document.getElementById('btnOpenStatus').addEventListener('click', openStatusPage);
+
+    // 제출
+    document.getElementById('form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const customerName = document.getElementById('customerName').value.trim();
+      const phoneRaw = document.getElementById('phone').value.trim();
+      const phoneDigits = onlyDigits(phoneRaw);
+      const phoneCheck = validatePhoneKR(phoneDigits);
+      const phoneToSave = formatPhoneKRSafe(phoneRaw);
+
+      const postcode = document.getElementById('postcode').value.trim();
+      const baseAddress = document.getElementById('baseAddress').value.trim();
+      const detailAddress = document.getElementById('detailAddress').value.trim();
+      updateFullAddress();
+      const fullAddress = document.getElementById('fullAddress').value.trim();
+      const request = document.getElementById('request').value.trim();
+      const confirmed = document.getElementById('confirmCheck').checked;
+
+      const missing = [];
+
+      if(!customerName) missing.push('받는 분 성함');
+      if(!phoneCheck.ok) missing.push('연락처(형식 확인)');
+      if(!postcode || !baseAddress) missing.push('주소(주소 찾기)');
+      if(!detailAddress) missing.push('상세주소');
+      if(!confirmed) missing.push('오배송 방지 확인(체크)');
+
+      if(missing.length){
+        alert(`아래 항목을 확인해주세요:\n- ${missing.join('\n- ')}\n\n${phoneCheck.ok ? '' : phoneCheck.msg}`);
+        return;
+      }
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+
+      const data = {
+        customerName,
+        phone: phoneToSave,
+        postcode,
+        baseAddress,
+        detailAddress,
+        fullAddress,
+        request,
+        website: ''
+      };
+
+      try {
+        const response = await fetch(submitUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          showSuccessReceipt({
+            receiptTitle: result.receiptTitle || '',
+            customerName,
+            phone: phoneToSave,
+            baseAddress,
+            detailAddress,
+            request
+          });
+        } else {
+          alert(`저장 실패: ${result.error || '오류'}`);
+        }
+      } catch (error) {
+        alert('네트워크 오류가 발생했어요. 잠시 후 다시 시도해주세요.');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
