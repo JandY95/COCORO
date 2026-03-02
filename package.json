@@ -1,0 +1,11 @@
+{
+  "name": "cocoro-backup-form",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo \"No build step (static html)\""
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.2.15"
+  }
+}
