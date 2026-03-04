@@ -32,7 +32,7 @@ exports.handler = async (event) => {
       return {
         statusCode: 404,
         headers: { "Content-Type": "application/json; charset=utf-8" },
-        body: JSON.stringify({ error: "Not found" }),
+        body: JSON.stringify({ error: "NOT_FOUND", message: "입력하신 접수번호를 찾을 수 없습니다." }),
       };
     }
 
@@ -58,7 +58,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 500,
       headers: { "Content-Type": "application/json; charset=utf-8" },
-      body: JSON.stringify({ error: "Query failed" }),
+      body: JSON.stringify({ error: "LOOKUP_FAILED", message: "조회 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요." }),
     };
   }
 };
