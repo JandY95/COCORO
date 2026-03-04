@@ -70,7 +70,7 @@ exports.handler = async (event) => {
   }
 
   // 필수값 체크
-  if (!customerName || !phone || !postcode || !baseAddress || !detailAddress || !fullAddress) {
+  if (!customerName || !phone || !postcode || !baseAddress || !detailAddress) {
     return {
       statusCode: 400,
       headers: { "Content-Type": "application/json; charset=utf-8" },
@@ -92,7 +92,7 @@ exports.handler = async (event) => {
         우편번호: { rich_text: [{ text: { content: postcode } }] },
         기본주소: { rich_text: [{ text: { content: baseAddress } }] },
         상세주소: { rich_text: [{ text: { content: detailAddress } }] },
-        전체주소: { rich_text: [{ text: { content: fullAddress } }] },
+//        전체주소: { rich_text: [{ text: { content: fullAddress } }] },
         요청사항: { rich_text: [{ text: { content: request || "" } }] },
 
         처리상태: { status: { name: "접수" } },
