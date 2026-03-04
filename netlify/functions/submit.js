@@ -55,7 +55,7 @@ exports.handler = async (event) => {
     postcode,
     baseAddress,
     detailAddress,
-    fullAddress,
+//    fullAddress,
     request,
     website, // 허니팟
   } = body;
